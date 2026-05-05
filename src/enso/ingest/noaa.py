@@ -54,6 +54,11 @@ SOURCES: dict[str, str] = {
     "tni":   "https://psl.noaa.gov/data/correlation/tni.data",
     # SILSO: numero mensal de manchas solares (proxy atividade solar)
     "sunspots": "https://www.sidc.be/SILSO/INFO/snmtotcsv.php",
+    # WWV: Warm Water Volume - integral termoclina 5N-5S, 120E-80W (PMEL/TAO)
+    # "Municao" subsuperficial do ENSO; lidera SST em ~6 meses (Meinen & McPhaden 2000)
+    "wwv":   "https://www.pmel.noaa.gov/tao/wwv/data/wwv.dat",
+    # T300: temperatura media 0-300m, mesma faixa equatorial
+    "t300":  "https://www.pmel.noaa.gov/tao/wwv/data/t300.dat",
 }
 
 
@@ -247,6 +252,56 @@ def fetch_pdo(force: bool = False) -> pd.Series:
     return _parse_year_columns(path).rename("pdo")
 
 
+def fetch_wwv_pair(name: str, url: str, force: bool = False) -> tuple[pd.Series, pd.Series]:
+    """Parser do formato PMEL WWV/T300:
+        Header de 4 linhas livres (descritivas) seguidas de
+            date    Volume    Anomaly
+            198001  2.6e15    8.1e13
+            ...
+    Retorna (valor_absoluto, anomalia) como series mensais.
+    """
+    path = _download(name, url, force)
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    rows = []
+    for ln in text.splitlines():
+        parts = ln.split()
+        if len(parts) != 3:
+            continue
+        if not re.fullmatch(r"\d{6}", parts[0]):
+            continue
+        try:
+            yyyymm = parts[0]
+            year, month = int(yyyymm[:4]), int(yyyymm[4:6])
+            val   = float(parts[1])
+            anom  = float(parts[2])
+        except ValueError:
+            continue
+        rows.append((pd.Timestamp(year=year, month=month, day=1), val, anom))
+    if not rows:
+        raise ValueError(f"Nenhuma linha de dados em {path.name}")
+    idx = pd.DatetimeIndex([r[0] for r in rows], name="date")
+    s_val  = pd.Series([r[1] for r in rows], index=idx, name=f"{name}").sort_index()
+    s_anom = pd.Series([r[2] for r in rows], index=idx, name=f"{name}_anom").sort_index()
+    return s_val, s_anom
+
+
+def fetch_wwv(force: bool = False) -> pd.DataFrame:
+    """Warm Water Volume e sua anomalia (m^3)."""
+    s_val, s_anom = fetch_wwv_pair("wwv", SOURCES["wwv"], force)
+    # normaliza por 1e15 para escala compativel com outros indices
+    return pd.concat([s_val / 1e15, s_anom / 1e15], axis=1).rename(
+        columns={"wwv": "wwv", "wwv_anom": "wwv_anom"}
+    )
+
+
+def fetch_t300(force: bool = False) -> pd.DataFrame:
+    """Temperatura media 0-300m (degC) e anomalia."""
+    s_val, s_anom = fetch_wwv_pair("t300", SOURCES["t300"], force)
+    return pd.concat([s_val, s_anom], axis=1).rename(
+        columns={"t300": "t300", "t300_anom": "t300_anom"}
+    )
+
+
 def fetch_sunspots(force: bool = False) -> pd.Series:
     """SILSO: numero medio mensal de manchas solares.
 
@@ -292,6 +347,8 @@ def build_master(force: bool = False, since: str = "1950-01-01") -> pd.DataFrame
         ("tni",          fetch_tni),
         ("pdo",          fetch_pdo),
         ("sunspots",     fetch_sunspots),
+        ("wwv",          fetch_wwv),
+        ("t300",         fetch_t300),
     ]
     for name, fn in fetchers:
         try:

@@ -15,8 +15,12 @@ CORE_FEATURES = [
     "nino3_sst",  "nino3_anom",
     "nino4_sst",  "nino4_anom",
     "nino34_sst", "nino34_anom",
-    # Indices atmosfericos / oceanicos
+    # Indices atmosfericos / oceanicos de superficie
     "soi", "mei", "olr", "pna", "iod", "qbo", "tni", "pdo",
+    # Subsuperficie: anomalia de WWV (warm water volume) e T300 (T media 0-300m).
+    # Lideram SST equatorial em ~6 meses (Meinen & McPhaden 2000) - pesquisa
+    # publicada usa para extender skill alem do limite de superficie.
+    "wwv_anom", "t300_anom",
     # ONI (excluido em select_features - media movel trimestral)
     # AMO excluido (parou em 2023 e quebra forecast atual)
     # sunspots: proxy solar
