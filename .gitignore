@@ -45,7 +45,13 @@ data/raw/*.dat
 !data/forecasts/.gitkeep
 
 # Modelos e logs
-runs/
+runs/*
+# Excecao: parquets de metricas e predicoes do run principal (~330KB total)
+# usados pela pagina Modelos do Streamlit
+!runs/train_full_v1_completo/
+runs/train_full_v1_completo/*
+!runs/train_full_v1_completo/metrics.parquet
+!runs/train_full_v1_completo/predictions.parquet
 checkpoints/
 *.pt
 *.pth

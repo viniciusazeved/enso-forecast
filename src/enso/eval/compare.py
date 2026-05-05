@@ -17,11 +17,19 @@ METRIC_DIRECTION = {
 
 
 def load_metrics(run_dir: Path) -> pd.DataFrame:
+    """Carrega metrics: tenta parquet (menor) e cai para csv."""
+    pq = Path(run_dir) / "metrics.parquet"
+    if pq.exists():
+        return pd.read_parquet(pq)
     return pd.read_csv(Path(run_dir) / "metrics.csv")
 
 
 def load_predictions(run_dir: Path) -> pd.DataFrame:
-    df = pd.read_csv(Path(run_dir) / "predictions.csv", parse_dates=["date"])
+    pq = Path(run_dir) / "predictions.parquet"
+    if pq.exists():
+        df = pd.read_parquet(pq)
+    else:
+        df = pd.read_csv(Path(run_dir) / "predictions.csv", parse_dates=["date"])
     return df
 
 

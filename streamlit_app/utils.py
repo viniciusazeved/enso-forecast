@@ -58,18 +58,27 @@ def load_forecast() -> pd.DataFrame:
 
 @st.cache_data(show_spinner=False)
 def load_metrics(tag: str = "full_v1") -> pd.DataFrame:
-    p = RUNS_DIR / f"train_{tag}" / "metrics.csv"
-    if not p.exists():
-        return pd.DataFrame()
-    return pd.read_csv(p)
+    """Carrega metrics: tenta parquet (menor) e cai para csv."""
+    base = RUNS_DIR / f"train_{tag}"
+    pq = base / "metrics.parquet"
+    if pq.exists():
+        return pd.read_parquet(pq)
+    csv = base / "metrics.csv"
+    if csv.exists():
+        return pd.read_csv(csv)
+    return pd.DataFrame()
 
 
 @st.cache_data(show_spinner=False)
 def load_predictions(tag: str = "full_v1") -> pd.DataFrame:
-    p = RUNS_DIR / f"train_{tag}" / "predictions.csv"
-    if not p.exists():
-        return pd.DataFrame()
-    return pd.read_csv(p, parse_dates=["date"])
+    base = RUNS_DIR / f"train_{tag}"
+    pq = base / "predictions.parquet"
+    if pq.exists():
+        return pd.read_parquet(pq)
+    csv = base / "predictions.csv"
+    if csv.exists():
+        return pd.read_csv(csv, parse_dates=["date"])
+    return pd.DataFrame()
 
 
 def latest_observation(df: pd.DataFrame, col: str = "nino34_anom") -> tuple[pd.Timestamp, float]:
