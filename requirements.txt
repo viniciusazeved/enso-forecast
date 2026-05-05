@@ -1,16 +1,17 @@
 # Dependencias minimas para o app Streamlit (sem torch).
 # Streamlit Cloud usa este arquivo automaticamente.
-# Para desenvolvimento local com training, use `uv sync` que instala via pyproject.toml.
+# Pinning de upper-bound evita breaking changes (pandas 3, numpy 2) que
+# o resolver puxaria sem teto.
 
-streamlit>=1.39
-pandas>=2.2
-numpy>=1.26
-scipy>=1.13
-pyarrow>=17.0
-plotly>=5.24
-requests>=2.32
-pyyaml>=6.0
-rich>=13.9
-typer>=0.13
-scikit-learn>=1.5
-statsmodels>=0.14
+streamlit>=1.39,<2.0
+pandas>=2.2,<3.0
+numpy>=1.26,<2.0
+scipy>=1.13,<2.0
+pyarrow>=17.0,<19.0
+plotly>=5.24,<7.0
+requests>=2.32,<3.0
+pyyaml>=6.0,<7.0
+rich>=13.9,<15.0
+typer>=0.13,<1.0
+scikit-learn>=1.5,<2.0
+statsmodels>=0.14,<1.0
