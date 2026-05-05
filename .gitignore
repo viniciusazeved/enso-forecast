@@ -11,7 +11,7 @@ MANIFEST
 
 # uv
 .venv/
-# uv.lock e mantido no repo para reprodutibilidade local
+uv.lock
 
 # Jupyter
 .ipynb_checkpoints/
