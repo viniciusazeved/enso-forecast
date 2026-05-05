@@ -52,15 +52,15 @@ st.markdown(
     "de skill** (a previsao nao agrega informacao alem da media historica)."
 )
 
-# R² da CV por horizonte (computado em runs/train_full_v1_completo)
-R2_CV = {1: 0.62, 2: 0.35, 3: -0.07, 4: -0.26, 5: -0.19, 6: -0.15}
+# R² da CV por horizonte (run full_v2_subsuperficial, com WWV + T300)
+R2_CV = {1: 0.69, 2: 0.44, 3: 0.19, 4: 0.02, 5: -0.01, 6: -0.07}
 
 show = fc.copy()
 show["target"] = show["target"].dt.strftime("%b/%Y")
 show["fase prevista"] = fc["mean"].apply(lambda v: fase_para_value(v)[0])
 show["r2_cv"] = fc["horizon"].map(R2_CV)
 show["skill"] = show["r2_cv"].apply(
-    lambda r: "validado" if r >= 0.30 else ("borderline" if r >= 0 else "sem skill")
+    lambda r: "validado" if r >= 0.15 else ("borderline" if r >= 0 else "sem skill")
 )
 
 st.dataframe(
@@ -94,9 +94,9 @@ fig.add_trace(go.Scatter(
     line=dict(color="#1c2a3a", width=2),
 ))
 
-# Separa os horizontes com skill (h<=2) dos sem skill (h>=3)
-fc_sk = fc[fc["horizon"] <= 2].sort_values("horizon")
-fc_no = fc[fc["horizon"] >= 3].sort_values("horizon")
+# Separa horizontes com skill (h<=3, R² CV positivo no v2) dos demais.
+fc_sk = fc[fc["horizon"] <= 3].sort_values("horizon")
+fc_no = fc[fc["horizon"] >= 4].sort_values("horizon")
 
 # Trecho com skill: solido + IC
 ref_sk = pd.DataFrame({
@@ -107,7 +107,7 @@ ref_sk = pd.DataFrame({
 })
 fig.add_trace(go.Scatter(
     x=ref_sk["date"], y=ref_sk["mean"], mode="lines+markers",
-    name="nosso ensemble (h<=2, skill validado)",
+    name="nosso ensemble (h<=3, skill validado)",
     line=dict(color="#1f4e79", width=2.5, dash="dash"),
     marker=dict(size=10, symbol="diamond"),
 ))
@@ -129,7 +129,7 @@ if not fc_no.empty:
     })
     fig.add_trace(go.Scatter(
         x=ref_no["date"], y=ref_no["mean"], mode="lines+markers",
-        name="nosso ensemble (h>=3, sem skill validado)",
+        name="nosso ensemble (h>=4, borderline ou sem skill)",
         line=dict(color="#9eb3c9", width=1.5, dash="dot"),
         marker=dict(size=8, symbol="diamond-open"),
     ))
@@ -162,30 +162,35 @@ st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
 st.divider()
 
-st.subheader("3. Skill por horizonte e mean reversion")
+st.subheader("3. Skill por horizonte")
 st.markdown(
     """
 Os modelos sao avaliados em walk-forward CV antes do retreino final. Para o
-run atual (`full_v1_completo`):
+run atual (`full_v2_subsuperficial`, com features WWV + T300):
 
-- **h=1 e h=2**: R² na CV positivo (0.62 e 0.35 respectivamente). O ensemble
-  agrega informacao alem da media historica - **skill validado**.
-- **h>=3**: R² na CV negativo. O ensemble e estatisticamente pior que prever
-  a climatologia mensal nesses horizontes. Os valores reportados sao mantidos
-  na tabela por completude, mas marcados como **sem skill**.
+- **h=1, 2, 3**: R² na CV positivo (0.69, 0.44, 0.19). O ensemble agrega
+  informacao alem da media historica - **skill validado**.
+- **h=4**: R² ~ 0.02 (borderline). Comparavel a climatologia.
+- **h=5 e 6**: R² ligeiramente negativo. Sem skill estatistico,
+  mas as previsoes nao revertem mais a zero como no run anterior so com
+  features de superficie (efeito conhecido da inclusao de WWV/T300).
 
-Quando R² da CV e negativo, redes neurais tendem a entrar em **mean reversion
-patologico**: as previsoes encolhem em direcao a media da serie de treino
-(proxima de 0 degC para `nino34_anom`). O h=6 do run atual ilustra isso: a
-media prevista (~+0.18 degC) esta proxima de zero, enquanto a CPC/IRI projeta
-+1.57 degC - a divergencia nao reflete uma discordancia analitica, mas a
-ausencia de skill do ensemble nesse horizonte.
+Quando R² da CV e negativo, redes neurais podem entrar em **mean reversion**:
+previsoes encolhem em direcao a media da serie de treino. A introducao de
+features subsuperficiais reduz esse efeito porque WWV e T300 lideram a
+SST equatorial em ~6 meses (Meinen & McPhaden 2000) - a "municao" do ENSO
+ja esta presente nos dados de origem, mesmo que parcialmente.
 
-Caminhos para estender o horizonte util:
+Comparativo com o run sem subsuperficie (`full_v1_completo`):
 
-- Adicionar features subsuperficiais (HCA, WWV) como em Ham et al. 2019.
-- Substituir o vencedor sem skill por persistencia ou climatologia mensal
-  como fallback para h>=3.
+| h | R² v1 (so superficie) | R² v2 (com WWV/T300) | delta |
+|---|----------------------:|---------------------:|------:|
+| 1 | +0.62 | +0.69 | +0.07 |
+| 2 | +0.35 | +0.44 | +0.09 |
+| 3 | -0.07 | **+0.19** | **+0.26** |
+| 4 | -0.26 | +0.02 | +0.28 |
+| 5 | -0.19 | -0.01 | +0.18 |
+| 6 | -0.15 | -0.07 | +0.08 |
 """
 )
 

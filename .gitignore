@@ -46,12 +46,16 @@ data/raw/*.dat
 
 # Modelos e logs
 runs/*
-# Excecao: parquets de metricas e predicoes do run principal (~330KB total)
+# Excecao: parquets de metricas e predicoes dos runs publicados
 # usados pela pagina Modelos do Streamlit
 !runs/train_full_v1_completo/
 runs/train_full_v1_completo/*
 !runs/train_full_v1_completo/metrics.parquet
 !runs/train_full_v1_completo/predictions.parquet
+!runs/train_full_v2_subsuperficial/
+runs/train_full_v2_subsuperficial/*
+!runs/train_full_v2_subsuperficial/metrics.parquet
+!runs/train_full_v2_subsuperficial/predictions.parquet
 checkpoints/
 *.pt
 *.pth

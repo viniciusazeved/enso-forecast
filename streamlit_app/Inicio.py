@@ -263,26 +263,32 @@ Para cada horizonte (1 a 6 meses), o vencedor por score unificado de RMSE,
 R² e ACC e re-treinado com toda a serie disponivel e gera o forecast final.
 Detalhamento por modelo e horizonte na pagina **Modelos**.
 
-**Skill validado em CV (R²)** por horizonte:
+**Skill validado em CV (R²)** por horizonte (run `full_v2_subsuperficial`,
+com features WWV e T300 do TAO/PMEL):
 
 | h | modelo | R² na CV | tem skill? |
 |---|--------|---------:|------------|
-| 1 | transformer | +0.62 | sim (forte) |
-| 2 | tcn | +0.35 | sim (moderado) |
-| 3 | tcn | -0.07 | nao (borderline) |
-| 4 | transformer | -0.26 | nao |
-| 5 | transformer | -0.19 | nao |
-| 6 | tcn | -0.15 | nao |
+| 1 | mamba       | +0.69 | sim (forte) |
+| 2 | tcn         | +0.44 | sim (moderado) |
+| 3 | transformer | +0.19 | sim (fraco) |
+| 4 | transformer | +0.02 | borderline |
+| 5 | tcn         | -0.01 | sem skill |
+| 6 | transformer | -0.07 | sem skill |
 
-R² negativo na CV significa que o modelo e pior que prever a media historica.
-Por essa razao, **a tabela abaixo mostra apenas h=1 e h=2** (os horizontes em
-que o ensemble agrega informacao alem da climatologia). A previsao completa
-1-6 esta na pagina **Forecast**, com indicacao do skill por horizonte.
+A inclusao das features subsuperficiais (anomalia de Warm Water Volume e
+temperatura media 0-300m) elevou o R² em todos os horizontes em relacao ao
+run anterior so com indices de superficie - efeito previsto na literatura
+(Meinen & McPhaden 2000; Ham et al. 2019), ja que o calor subsuperficial
+lidera a SST equatorial em ~6 meses.
+
+**A tabela abaixo mostra h=1 a h=3** (skill validado em CV). h=4 esta
+borderline; h=5 e h=6 ainda sem skill. Forecast completo 1-6 com
+indicacao por horizonte na pagina **Forecast**.
 """
 )
 
 if not fc_ours.empty:
-    fc_sorted = fc_ours[fc_ours["horizon"] <= 2].sort_values("horizon")
+    fc_sorted = fc_ours[fc_ours["horizon"] <= 3].sort_values("horizon")
     rows = []
     for _, row in fc_sorted.iterrows():
         ph, _ = fase_para_value(row["mean"])
@@ -338,9 +344,9 @@ if not fc_off.empty:
         ))
 
 if not fc_ours.empty:
-    # No grafico do panorama, mostramos apenas h<=2 (skill validado).
-    # Os horizontes h>=3 estao no grafico da pagina Forecast com aviso.
-    fc_sorted = fc_ours[fc_ours["horizon"] <= 2].sort_values("horizon")
+    # No grafico do panorama, mostramos apenas h<=3 (skill validado em v2).
+    # h>=4 esta na pagina Forecast com aviso.
+    fc_sorted = fc_ours[fc_ours["horizon"] <= 3].sort_values("horizon")
     ref = pd.DataFrame({
         "date": [last_date] + fc_sorted["target"].tolist(),
         "mean": [last_val] + fc_sorted["mean"].tolist(),

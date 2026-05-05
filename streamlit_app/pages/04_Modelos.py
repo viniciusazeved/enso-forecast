@@ -47,11 +47,12 @@ st.markdown(
 """
 )
 
-# Detecta runs disponiveis automaticamente
+# Detecta runs disponiveis automaticamente. v2 (com WWV/T300) eh o default.
+_PRIORITY = {"full_v2_subsuperficial": 0, "full_v1_completo": 1}
 available = sorted(
     [p.name.replace("train_", "") for p in RUNS_DIR.glob("train_*")
      if (p / "metrics.parquet").exists() or (p / "metrics.csv").exists()],
-    key=lambda x: 0 if x == "full_v1" else 1,
+    key=lambda x: (_PRIORITY.get(x, 99), x),
 )
 if not available:
     st.warning("Nenhum run encontrado. Rode `scripts/03_train.py`.")
