@@ -49,7 +49,8 @@ st.markdown(
 
 # Detecta runs disponiveis automaticamente
 available = sorted(
-    [p.name.replace("train_", "") for p in RUNS_DIR.glob("train_*") if (p / "metrics.csv").exists()],
+    [p.name.replace("train_", "") for p in RUNS_DIR.glob("train_*")
+     if (p / "metrics.parquet").exists() or (p / "metrics.csv").exists()],
     key=lambda x: 0 if x == "full_v1" else 1,
 )
 if not available:
