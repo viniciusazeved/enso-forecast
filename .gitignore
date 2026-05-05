@@ -1,0 +1,71 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# uv
+.venv/
+# uv.lock e mantido no repo para reprodutibilidade local
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_meta
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Dados brutos baixados das fontes (regenerados por scripts/01_ingest.py)
+data/raw/*.csv
+data/raw/*.txt
+data/raw/*.dat
+!data/raw/official_forecast.csv
+!data/raw/.gitkeep
+
+# Dados processados e forecast: COMMITAR (necessarios pra Streamlit Cloud)
+# enso_master.parquet (~70KB) e forecast_future.parquet (~8KB)
+!data/processed/enso_master.parquet
+!data/processed/enso_master.csv
+!data/forecasts/forecast_future.parquet
+!data/forecasts/forecast_future.csv
+!data/processed/.gitkeep
+!data/forecasts/.gitkeep
+
+# Modelos e logs
+runs/
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+mlruns/
+wandb/
+
+# Outputs temporários
+tmp/
+*.log
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Notebooks com saídas
+notebooks/*-output.ipynb
+
+# Docs do paper (referencia local, nao do repo)
+Docs_Referencia/
+
+# Configuracoes locais do Claude / IDE
+.claude/
+.cursor/
