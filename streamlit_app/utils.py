@@ -33,7 +33,7 @@ def phase_label(value: float) -> tuple[str, str]:
     return "Indefinido", "#999999"
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=600)
 def load_master(since: str | None = None, until: str | None = None) -> pd.DataFrame:
     df = pd.read_parquet(MASTER_PARQUET)
     df.index = pd.DatetimeIndex(df.index)
@@ -45,7 +45,7 @@ def load_master(since: str | None = None, until: str | None = None) -> pd.DataFr
     return df
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=600)
 def load_forecast() -> pd.DataFrame:
     p = FORECAST_DIR / "forecast_future.parquet"
     if not p.exists():
@@ -56,7 +56,7 @@ def load_forecast() -> pd.DataFrame:
     return df
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=600)
 def load_metrics(tag: str = "full_v1") -> pd.DataFrame:
     """Carrega metrics: tenta parquet (menor) e cai para csv."""
     base = RUNS_DIR / f"train_{tag}"
@@ -69,7 +69,7 @@ def load_metrics(tag: str = "full_v1") -> pd.DataFrame:
     return pd.DataFrame()
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=600)
 def load_predictions(tag: str = "full_v1") -> pd.DataFrame:
     base = RUNS_DIR / f"train_{tag}"
     pq = base / "predictions.parquet"
