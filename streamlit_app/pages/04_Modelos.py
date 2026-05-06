@@ -126,11 +126,26 @@ fig_box = px.box(
     labels={"model": "modelo"},
     color_discrete_sequence=px.colors.qualitative.Set2,
 )
+# Linha de referencia: para R² e ACC, R²=0 / ACC=0 marca o limiar de skill
+# (modelo equivalente a previsao da media historica). Para RMSE nao se aplica.
+if metric_choice in ("r2", "acc"):
+    fig_box.add_hline(
+        y=0, line=dict(color="#cb181d", width=1.5, dash="dash"),
+        annotation_text=f"{metric_choice.upper()}=0 (limiar de skill)",
+        annotation_position="top right",
+        annotation_font=dict(size=10, color="#cb181d"),
+    )
 fig_box.update_layout(
     height=600, showlegend=False, plot_bgcolor="white",
     font=dict(family="Inter, -apple-system, Segoe UI, Arial, sans-serif"),
 )
 st.plotly_chart(fig_box, use_container_width=True)
+if metric_choice in ("r2", "acc"):
+    st.caption(
+        f"Linha vermelha tracejada: {metric_choice.upper()}=0. Boxplots inteiramente "
+        "abaixo dessa linha indicam ausencia de skill no horizonte (modelo pior que "
+        "prever a media historica). Acima, ha skill estatistico."
+    )
 
 st.divider()
 

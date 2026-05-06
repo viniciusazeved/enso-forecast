@@ -344,28 +344,47 @@ if not fc_off.empty:
         ))
 
 if not fc_ours.empty:
-    # No grafico do panorama, mostramos apenas h<=3 (skill validado em v2).
-    # h>=4 esta na pagina Forecast com aviso.
-    fc_sorted = fc_ours[fc_ours["horizon"] <= 3].sort_values("horizon")
-    ref = pd.DataFrame({
-        "date": [last_date] + fc_sorted["target"].tolist(),
-        "mean": [last_val] + fc_sorted["mean"].tolist(),
-        "q05":  [last_val] + fc_sorted["q05"].tolist(),
-        "q95":  [last_val] + fc_sorted["q95"].tolist(),
+    # h<=3: skill validado em CV (v2). h>=4: borderline ou sem skill.
+    # Mostra ambos para transparencia, com tratamento visual distinto.
+    fc_sk = fc_ours[fc_ours["horizon"] <= 3].sort_values("horizon")
+    fc_no = fc_ours[fc_ours["horizon"] >= 4].sort_values("horizon")
+
+    # Trecho com skill: linha solida + IC
+    ref_sk = pd.DataFrame({
+        "date": [last_date] + fc_sk["target"].tolist(),
+        "mean": [last_val] + fc_sk["mean"].tolist(),
+        "q05":  [last_val] + fc_sk["q05"].tolist(),
+        "q95":  [last_val] + fc_sk["q95"].tolist(),
     })
     fig.add_trace(go.Scatter(
-        x=ref["date"], y=ref["mean"], mode="lines+markers",
-        name="ensemble redes neurais",
+        x=ref_sk["date"], y=ref_sk["mean"], mode="lines+markers",
+        name="ensemble (h<=3, skill validado)",
         line=dict(color="#1f4e79", width=2.5, dash="dash"),
         marker=dict(size=10, symbol="diamond"),
     ))
     fig.add_trace(go.Scatter(
-        x=list(ref["date"]) + list(ref["date"][::-1]),
-        y=list(ref["q95"])  + list(ref["q05"][::-1]),
+        x=list(ref_sk["date"]) + list(ref_sk["date"][::-1]),
+        y=list(ref_sk["q95"])  + list(ref_sk["q05"][::-1]),
         fill="toself", fillcolor="rgba(31,78,121,0.18)",
         line=dict(color="rgba(0,0,0,0)"),
         name="IC ensemble 90%", hoverinfo="skip",
     ))
+
+    # Trecho borderline / sem skill: linha pontilhada cinza, sem IC
+    if not fc_no.empty:
+        last_sk = fc_sk.iloc[-1] if not fc_sk.empty else None
+        x0_no = last_sk["target"] if last_sk is not None else last_date
+        y0_no = float(last_sk["mean"]) if last_sk is not None else last_val
+        ref_no = pd.DataFrame({
+            "date": [x0_no] + fc_no["target"].tolist(),
+            "mean": [y0_no] + fc_no["mean"].tolist(),
+        })
+        fig.add_trace(go.Scatter(
+            x=ref_no["date"], y=ref_no["mean"], mode="lines+markers",
+            name="ensemble (h>=4, borderline ou sem skill)",
+            line=dict(color="#9eb3c9", width=1.5, dash="dot"),
+            marker=dict(size=8, symbol="diamond-open"),
+        ))
 
 fig.update_layout(
     height=460, margin=dict(l=10, r=10, t=10, b=10),

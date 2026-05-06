@@ -93,21 +93,39 @@ if {"q05", "q95"}.issubset(off_sorted.columns):
 if not fc_ours.empty:
     last_date = serie.index[-1]
     last_val  = float(serie.iloc[-1])
-    ours = fc_ours.sort_values("horizon")
-    xs = [last_date] + ours["target"].tolist()
-    ys = [last_val] + ours["mean"].tolist()
-    qlo = [last_val] + ours["q05"].tolist()
-    qhi = [last_val] + ours["q95"].tolist()
+    fc_sk = fc_ours[fc_ours["horizon"] <= 3].sort_values("horizon")
+    fc_no = fc_ours[fc_ours["horizon"] >= 4].sort_values("horizon")
+
+    # Trecho com skill validado (h<=3): linha solida com IC
+    xs_sk = [last_date] + fc_sk["target"].tolist()
+    ys_sk = [last_val] + fc_sk["mean"].tolist()
+    qlo_sk = [last_val] + fc_sk["q05"].tolist()
+    qhi_sk = [last_val] + fc_sk["q95"].tolist()
     fig.add_trace(go.Scatter(
-        x=xs, y=ys, mode="lines+markers", name="nosso ensemble",
+        x=xs_sk, y=ys_sk, mode="lines+markers",
+        name="nosso ensemble (h<=3, skill validado)",
         line=dict(color="#1f4e79", width=2.5, dash="dash"),
         marker=dict(size=9, symbol="diamond"),
     ))
     fig.add_trace(go.Scatter(
-        x=xs + xs[::-1], y=qhi + qlo[::-1],
+        x=xs_sk + xs_sk[::-1], y=qhi_sk + qlo_sk[::-1],
         fill="toself", fillcolor="rgba(31,78,121,0.20)",
         line=dict(color="rgba(0,0,0,0)"), name="IC nosso 90%", hoverinfo="skip",
     ))
+
+    # Trecho borderline / sem skill (h>=4): linha pontilhada cinza, sem IC
+    if not fc_no.empty:
+        last_sk = fc_sk.iloc[-1] if not fc_sk.empty else None
+        x0_no = last_sk["target"] if last_sk is not None else last_date
+        y0_no = float(last_sk["mean"]) if last_sk is not None else last_val
+        xs_no = [x0_no] + fc_no["target"].tolist()
+        ys_no = [y0_no] + fc_no["mean"].tolist()
+        fig.add_trace(go.Scatter(
+            x=xs_no, y=ys_no, mode="lines+markers",
+            name="nosso ensemble (h>=4, borderline ou sem skill)",
+            line=dict(color="#9eb3c9", width=1.5, dash="dot"),
+            marker=dict(size=7, symbol="diamond-open"),
+        ))
 
 fig.update_layout(
     height=480, plot_bgcolor="white",
